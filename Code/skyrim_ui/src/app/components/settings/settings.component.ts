@@ -1,9 +1,8 @@
 import { Component, EventEmitter, HostListener, OnInit, Output } from '@angular/core';
 import { TranslocoService } from '@ngneat/transloco';
 import { ClientService } from 'src/app/services/client.service';
-import { SettingService } from 'src/app/services/setting.service';
+import { FontSize, SettingService } from 'src/app/services/setting.service';
 import { Sound, SoundService } from '../../services/sound.service';
-
 
 export enum PartyAnchor {
   TOP_LEFT,
@@ -23,6 +22,13 @@ export class SettingsComponent implements OnInit {
   readonly PartyAnchor = PartyAnchor;
 
   readonly availableLanguages = this.translocoService.getAvailableLangs();
+  readonly availableFontSizes: {id: FontSize, label: string}[] = [
+    {id: FontSize.XS, label: 'COMPONENT.SETTINGS.FONT_SIZES.XS'},
+    {id: FontSize.S, label: 'COMPONENT.SETTINGS.FONT_SIZES.S'},
+    {id: FontSize.M, label: 'COMPONENT.SETTINGS.FONT_SIZES.M'},
+    {id: FontSize.L, label: 'COMPONENT.SETTINGS.FONT_SIZES.L'},
+    {id: FontSize.XL, label: 'COMPONENT.SETTINGS.FONT_SIZES.XL'}
+  ]
 
   public volume: number;
   public muted: boolean;
@@ -33,6 +39,9 @@ export class SettingsComponent implements OnInit {
   public partyAnchor: PartyAnchor;
   public partyAnchorOffsetX: number;
   public partyAnchorOffsetY: number;
+  public fontSize: FontSize;
+  public maxFontSize = Object.values(FontSize).length - 1;
+  public minFontSize = 0;
   public language: string;
 
   @Output() public done = new EventEmitter<void>();
@@ -56,6 +65,7 @@ export class SettingsComponent implements OnInit {
     this.partyAnchor = this.settings.getPartyAnchor();
     this.partyAnchorOffsetX = this.settings.getPartyAnchorOffsetX();
     this.partyAnchorOffsetY = this.settings.getPartyAnchorOffsetY();
+    this.fontSize = this.settings.getFontSize();
     this.language = this.settings.getLanguage();
   }
 
@@ -107,6 +117,12 @@ export class SettingsComponent implements OnInit {
   onPartyAnchorOffsetYChange(offset: number) {
     this.settings.setPartyAnchorOffsetY(offset);
     this.partyAnchorOffsetY = offset;
+    this.settingsUpdated.next();
+  }
+
+  onFontSizeChange(fontSize: FontSize) {
+    this.settings.setFontSize(fontSize);
+    this.fontSize = fontSize;
     this.settingsUpdated.next();
   }
 

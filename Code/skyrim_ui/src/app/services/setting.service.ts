@@ -1,9 +1,24 @@
 import { Injectable } from '@angular/core';
 import { TranslocoService } from '@ngneat/transloco';
 import { BehaviorSubject } from 'rxjs';
-import { PartyAnchor } from '../components/settings/settings.component';
+import { PartyAnchor} from '../components/settings/settings.component';
 import { StoreService } from './store.service';
 
+export enum FontSize {
+  XS = 'xs',
+  S = 's',
+  M = 'm',
+  L = 'l',
+  XL = 'xl'
+}
+
+export const fontSizeToPixels: Record<FontSize, number> = {
+  [FontSize.XS]: 10,
+  [FontSize.S]: 12,
+  [FontSize.M]: 16,
+  [FontSize.L]: 20,
+  [FontSize.XL]: 26,
+}
 
 @Injectable({
   providedIn: 'root',
@@ -12,6 +27,7 @@ export class SettingService {
 
   public partyShownChange = new BehaviorSubject(this.isPartyShown());
   public partyAutoHideChange = new BehaviorSubject(this.isPartyAutoHidden());
+  public fontSizeChange = new BehaviorSubject(this.getFontSize())
 
   constructor(
     private readonly storeService: StoreService,
@@ -91,6 +107,15 @@ export class SettingService {
 
   public getPartyAnchorOffsetY(): number {
     return JSON.parse(this.storeService.get('party_anchor_offset_y', 3));
+  }
+
+  public setFontSize(size: FontSize) {
+    this.fontSizeChange.next(size);
+    this.storeService.set('font_size', size);
+  }
+
+  public getFontSize(): FontSize {
+    return this.storeService.get('font_size', FontSize.M);
   }
 
   public getLanguage(): string {

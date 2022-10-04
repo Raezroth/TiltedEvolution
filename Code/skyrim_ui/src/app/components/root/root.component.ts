@@ -7,13 +7,14 @@ import { fadeInOutActiveAnimation } from '../../animations/fade-in-out-active.an
 import { View } from '../../models/view.enum';
 import { ClientService } from '../../services/client.service';
 import { DestroyService } from '../../services/destroy.service';
-import { SettingService } from '../../services/setting.service';
+import { SettingService, fontSizeToPixels } from '../../services/setting.service';
 import { Sound, SoundService } from '../../services/sound.service';
 import { UiRepository } from '../../store/ui.repository';
 import { ChatComponent } from '../chat/chat.component';
 import { GroupComponent } from '../group/group.component';
 import { controlsAnimation } from './controls.animation';
 import { notificationsAnimation } from './notifications.animation';
+import {map} from 'rxjs/operators';
 
 
 @Component({
@@ -55,6 +56,7 @@ export class RootComponent implements OnInit {
   public ngOnInit(): void {
     this.onInGameStateSubscription();
     this.onActivationStateSubscription();
+    this.onFontSizeSubscription();
   }
 
   public onInGameStateSubscription() {
@@ -78,6 +80,14 @@ export class RootComponent implements OnInit {
           this.closeView();
         }
       });
+  }
+
+  public onFontSizeSubscription() {
+    this.settingService.fontSizeChange
+    .pipe(takeUntil(this.destroy$), map(size => fontSizeToPixels[size]))
+    .subscribe( size => {
+      document.documentElement.setAttribute('style', `font-size: ${size}px;`);
+    })
   }
 
   public setView(view: View | null) {

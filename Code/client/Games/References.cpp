@@ -58,6 +58,8 @@ TP_THIS_FUNCTION(TSetPosition, char, Actor, NiPoint3& acPosition);
 TP_THIS_FUNCTION(TRotate, void, TESObjectREFR, float aAngle);
 TP_THIS_FUNCTION(TActorProcess, char, Actor, float aValue);
 TP_THIS_FUNCTION(TLockChange, void, TESObjectREFR);
+TP_THIS_FUNCTION(TSetWeather, void, Sky, TESWeather* apWeather, bool abOverride, bool abAccelerate);
+TP_THIS_FUNCTION(TForceWeather, void, Sky, TESWeather* apWeather, bool abOverride);
 
 static TSetPosition* RealSetPosition = nullptr;
 static TRotate* RealRotateX = nullptr;
@@ -65,6 +67,8 @@ static TRotate* RealRotateY = nullptr;
 static TRotate* RealRotateZ = nullptr;
 static TActorProcess* RealActorProcess = nullptr;
 static TLockChange* RealLockChange = nullptr;
+static TSetWeather* RealSetWeather = nullptr;
+static TForceWeather* RealForceWeather = nullptr;
 
 namespace Settings
 {
@@ -897,24 +901,14 @@ Sky* Sky::Get() noexcept
 
 void Sky::SetWeather(TESWeather* apWeather) noexcept
 {
-    TP_THIS_FUNCTION(TSetWeather, void, Sky, TESWeather* apWeather, bool abOverride, bool abAccelerate);
-    POINTER_SKYRIMSE(TSetWeather, setWeather, 26241);
-    // TODO(ft): verify
-    POINTER_FALLOUT4(TSetWeather, setWeather, 1244029);
-
     // TODO: verify the use of these bools
-    TiltedPhoques::ThisCall(setWeather, this, apWeather, true, true);
+    TiltedPhoques::ThisCall(RealSetWeather, this, apWeather, true, true);
 }
 
 void Sky::ForceWeather(TESWeather* apWeather) noexcept
 {
-    TP_THIS_FUNCTION(TForceWeather, void, Sky, TESWeather* apWeather, bool abOverride);
-    POINTER_SKYRIMSE(TForceWeather, forceWeather, 26243);
-    // TODO(ft): verify
-    POINTER_FALLOUT4(TForceWeather, forceWeather, 698559);
-
     // TODO: verify the use of abOverride
-    TiltedPhoques::ThisCall(forceWeather, this, apWeather, true);
+    TiltedPhoques::ThisCall(RealForceWeather, this, apWeather, true);
 }
 
 void Sky::ResetWeather() noexcept
@@ -1064,22 +1058,22 @@ void TP_MAKE_THISCALL(HookSetCurrentPickREFR, Console, BSPointerHandle<TESObject
     return TiltedPhoques::ThisCall(RealSetCurrentPickREFR, apThis, apRefr);
 }
 
-TP_THIS_FUNCTION(TSetWeather, void, Sky, TESWeather* apWeather, bool abOverride, bool abAccelerate);
-static TSetWeather* RealSetWeather = nullptr;
-
 void TP_MAKE_THISCALL(HookSetWeather, Sky, TESWeather* apWeather, bool abOverride, bool abAccelerate)
 {
-    spdlog::warn("Set weather form id: {:X}, override: {}, accelerate: {}", apWeather ? apWeather->formID : 0, abOverride, abAccelerate);
+    spdlog::debug("Set weather form id: {:X}, override: {}, accelerate: {}", apWeather ? apWeather->formID : 0, abOverride, abAccelerate);
+
+    if (!Sky::s_shouldUpdateWeather)
+        return;
 
     TiltedPhoques::ThisCall(RealSetWeather, apThis, apWeather, abOverride, abAccelerate);
 }
 
-TP_THIS_FUNCTION(TForceWeather, void, Sky, TESWeather* apWeather, bool abOverride);
-static TForceWeather* RealForceWeather = nullptr;
-
 void TP_MAKE_THISCALL(HookForceWeather, Sky, TESWeather* apWeather, bool abOverride)
 {
-    spdlog::error("Force weather form id: {:X}, override: {}", apWeather ? apWeather->formID : 0, abOverride);
+    spdlog::debug("Force weather form id: {:X}, override: {}", apWeather ? apWeather->formID : 0, abOverride);
+
+    if (!Sky::s_shouldUpdateWeather)
+        return;
 
     TiltedPhoques::ThisCall(RealForceWeather, apThis, apWeather, abOverride);
 }
@@ -1087,14 +1081,23 @@ void TP_MAKE_THISCALL(HookForceWeather, Sky, TESWeather* apWeather, bool abOverr
 TP_THIS_FUNCTION(TUpdateWeather, void, Sky);
 static TUpdateWeather* RealUpdateWeather = nullptr;
 
-// TODO: if party leader is not in area, allow UpdateWeather.
-// Maybe add IsMyLeader bool to PlayerComponent to check if leader is loaded?
 void TP_MAKE_THISCALL(HookUpdateWeather, Sky)
 {
     if (!Sky::s_shouldUpdateWeather)
         return;
 
     TiltedPhoques::ThisCall(RealUpdateWeather, apThis);
+}
+
+TP_THIS_FUNCTION(TAddDeathItems, void, Actor);
+static TAddDeathItems* RealAddDeathItems = nullptr;
+
+void TP_MAKE_THISCALL(HookAddDeathItems, Actor)
+{
+    if (apThis->GetExtension()->IsRemote())
+        return;
+
+    TiltedPhoques::ThisCall(RealAddDeathItems, apThis);
 }
 
 TiltedPhoques::Initializer s_referencesHooks([]()
@@ -1125,12 +1128,10 @@ TiltedPhoques::Initializer s_referencesHooks([]()
 
         POINTER_SKYRIMSE(TSetCurrentPickREFR, s_setCurrentPickREFR, 51093);
 
-        // TODO: these hooks interfere with call, refactor
         POINTER_SKYRIMSE(TSetWeather, setWeather, 26241);
         // TODO(ft): verify
         POINTER_FALLOUT4(TSetWeather, setWeather, 1244029);
 
-        // TODO: these hooks interfere with call, refactor
         POINTER_SKYRIMSE(TForceWeather, forceWeather, 26243);
         // TODO(ft): verify
         POINTER_FALLOUT4(TForceWeather, forceWeather, 698559);
@@ -1138,6 +1139,10 @@ TiltedPhoques::Initializer s_referencesHooks([]()
         POINTER_SKYRIMSE(TUpdateWeather, updateWeather, 26231);
         // TODO(ft): verify
         POINTER_FALLOUT4(TUpdateWeather, updateWeather, 1278860);
+
+        POINTER_SKYRIMSE(TAddDeathItems, addDeathItems, 37198);
+        // TODO(ft): verify
+        POINTER_FALLOUT4(TAddDeathItems, addDeathItems, 708754);
 
         RealSetPosition = s_setPosition.Get();
         RealRotateX = s_rotateX.Get();
@@ -1154,6 +1159,7 @@ TiltedPhoques::Initializer s_referencesHooks([]()
         RealSetWeather = setWeather.Get();
         RealForceWeather = forceWeather.Get();
         RealUpdateWeather = updateWeather.Get();
+        RealAddDeathItems = addDeathItems.Get();
 
         TP_HOOK(&RealSetPosition, HookSetPosition);
         TP_HOOK(&RealRotateX, HookRotateX);
@@ -1167,5 +1173,6 @@ TiltedPhoques::Initializer s_referencesHooks([]()
         TP_HOOK(&RealSetWeather, HookSetWeather);
         TP_HOOK(&RealForceWeather, HookForceWeather);
         TP_HOOK(&RealUpdateWeather, HookUpdateWeather);
+        TP_HOOK(&RealAddDeathItems, HookAddDeathItems);
     });
 
