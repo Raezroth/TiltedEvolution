@@ -8,6 +8,7 @@ struct AnimationGraphDescriptorManager
 
     static AnimationGraphDescriptorManager& Get() noexcept;
     const AnimationGraphDescriptor* GetDescriptor(uint64_t aKey) const noexcept;
+    void ReRegister(uint64_t aKey, AnimationGraphDescriptor aAnimationGraphDescriptor) noexcept;
 
     struct Builder
     {

@@ -17,14 +17,14 @@ target(name)
         add_headerfiles("Structs/Skyrim/**.h")
         add_includedirs("Structs/Skyrim")
     end
-    if name == "FalloutEncoding" then
+    --[[if name == "FalloutEncoding" then
         add_files("Structs/Fallout4/**.cpp")
         add_headerfiles("Structs/Fallout4/**.h")
         add_includedirs("Structs/Fallout4")
-    end
+    end]]
 
     add_packages("hopscotch-map", "glm", "tiltedcore")
 end
 
 build_encoding("SkyrimEncoding", "TP_SKYRIM=1")
-build_encoding("FalloutEncoding", "TP_FALLOUT=1")
+--build_encoding("FalloutEncoding", "TP_FALLOUT=1")

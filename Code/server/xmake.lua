@@ -50,11 +50,11 @@ target("SkyrimTogetherServer")
     add_deps("SkyrimEncoding")
     build_server()
 
-target("FalloutTogetherServer")
+--[[target("FalloutTogetherServer")
     set_basename("FTServer")
     add_defines(
         "TARGET_FT",
         "TP_FALLOUT=1",
         "TARGET_PREFIX=\"ft\"")
     add_deps("FalloutEncoding")
-    build_server()
+    build_server()]]

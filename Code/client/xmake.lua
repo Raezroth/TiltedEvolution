@@ -29,13 +29,13 @@ target(name)
         add_includedirs("Games/Skyrim")
         add_deps("SkyrimEncoding")
     end
-    if name == "FalloutTogetherClient" then
+    --[[if name == "FalloutTogetherClient" then
         add_files("Games/Fallout4/**.cpp")
         add_headerfiles("Games/Fallout4/**.h")
         -- rather hacky:
         add_includedirs("Games/Fallout4")
         add_deps("FalloutEncoding")
-    end
+    end]]
     add_deps(
         "UiProcess",
         "CommonLib",
@@ -82,4 +82,4 @@ end
 add_requires("tiltedcore", {debug = true})
 
 build_client("SkyrimTogetherClient", "TP_SKYRIM=1")
-build_client("FalloutTogetherClient", "TP_FALLOUT=1")
+--build_client("FalloutTogetherClient", "TP_FALLOUT=1")

@@ -24,6 +24,9 @@
 #include <Events/PreUpdateEvent.h>
 #include <Events/UpdateEvent.h>
 
+// MOD BEHAVIORS: add modded behaviors
+#include <ModCompat/BehaviorVarSig.h>
+
 World::World()
     : m_runner(m_dispatcher)
     , m_transport(*this, m_dispatcher)
@@ -50,6 +53,9 @@ World::World()
     ctx().emplace<StringCacheService>(m_dispatcher);
     ctx().emplace<CombatService>(*this, m_transport, m_dispatcher);
     ctx().emplace<WeatherService>(*this, m_transport, m_dispatcher);
+
+    // MOD BEHAVIORS: add modded behaviors
+    BehaviorVarSig::Get()->initialize();
 }
 
 World::~World() = default;
